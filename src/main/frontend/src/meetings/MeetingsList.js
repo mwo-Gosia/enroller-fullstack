@@ -1,4 +1,4 @@
-export default function MeetingsList({meetings}) {
+export default function MeetingsList({meetings, onDelete}) {
     return (
         <table>
             <thead>
