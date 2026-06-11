@@ -25,7 +25,7 @@ export default function MeetingsPage({username}) {
         });
         if (response.ok) {
             const newMeeting = await response.json();
-            const nextMeetings = [...meetings, meeting];
+            const nextMeetings = [...meetings, newMeeting];
             setMeetings(nextMeetings);
             setAddingNewMeeting(false);
         }
@@ -40,6 +40,43 @@ export default function MeetingsPage({username}) {
             setMeetings(nextMeetings);
         }
     }
+
+    async function handleSignIn(meeting) {
+            const response = await fetch(`/api/meetings/${meeting.id}/participants`, {
+                method: 'POST',
+                body: JSON.stringify({ login: username }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                const updatedMeetings = meetings.map(m => {
+                    if (m.id === meeting.id) {
+                        const participants = m.participants ? [...m.participants, { login: username }] : [{ login: username }];
+                        return { ...m, participants };
+                    }
+                    return m;
+                });
+                setMeetings(updatedMeetings);
+            }
+        }
+
+        async function handleSignOut(meeting) {
+            const response = await fetch(`/api/meetings/${meeting.id}/participants/${username}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                const updatedMeetings = meetings.map(m => {
+                    if (m.id === meeting.id) {
+                        const participants = m.participants.filter(p => p.login !== username);
+                        return { ...m, participants };
+                    }
+                    return m;
+                });
+                setMeetings(updatedMeetings);
+            }
+        }
+
     return (
         <div>
             <h2>Zajęcia ({meetings.length})</h2>
@@ -49,8 +86,13 @@ export default function MeetingsPage({username}) {
                     : <button onClick={() => setAddingNewMeeting(true)}>Dodaj nowe spotkanie</button>
             }
             {meetings.length > 0 &&
-                <MeetingsList meetings={meetings} username={username}
-                              onDelete={handleDeleteMeeting}/>}
+                <MeetingsList
+                    meetings={meetings}
+                    username={username}
+                    onDelete={handleDeleteMeeting}
+                    onSignIn={handleSignIn}
+                    onSignOut={handleSignOut}
+                />}
         </div>
     )
 }
